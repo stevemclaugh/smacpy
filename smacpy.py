@@ -16,14 +16,14 @@ import argparse
 from glob import glob
 from scikits.audiolab import Sndfile
 from scikits.audiolab import Format
-from sklearn.mixture import GMM
+from sklearn.mixture import GaussianMixture
 
 from MFCC import melScaling
 
 #######################################################################
 # some settings
 framelen = 1024
-fs = 44100.0
+fs = 16000.0
 verbose = True
 
 #######################################################################
@@ -72,13 +72,13 @@ class Smacpy:
 			else:
 				aggfeatures[label] = np.vstack((aggfeatures[label], normed))
 
-		# For each label's aggregated features, train a GMM and remember it
-		self.gmms = {}
+		# For each label's aggregated features, train a GaussianMixture and remember it
+		self.GaussianMixtures = {}
 		for label, aggf in aggfeatures.items():
-			if verbose: print("    Training a GMM for label %s, using data of shape %s" % (label, str(np.shape(aggf))))
-			self.gmms[label] = GMM(n_components=10) # , cvtype='full')
-			self.gmms[label].fit(aggf)
-		if verbose: print("  Trained %i classes from %i input files" % (len(self.gmms), len(trainingdata)))
+			if verbose: print("    Training a GaussianMixture for label %s, using data of shape %s" % (label, str(np.shape(aggf))))
+			self.GaussianMixtures[label] = GaussianMixture(n_components=10) # , cvtype='full')
+			self.GaussianMixtures[label].fit(aggf)
+		if verbose: print("  Trained %i classes from %i input files" % (len(self.GaussianMixtures), len(trainingdata)))
 
 	def __normalise(self, data):
 		"Normalises data using the mean and stdev of the training data - so that everything is on a common scale."
@@ -87,11 +87,11 @@ class Smacpy:
 	def classify(self, wavpath):
 		"Specify the path to an audio file, and this returns the max-likelihood class, as a string label."
 		features = self.__normalise(self.file_to_features(wavpath))
-		# For each label GMM, find the overall log-likelihood and choose the strongest
+		# For each label GaussianMixture, find the overall log-likelihood and choose the strongest
 		bestlabel = ''
 		bestll = -9e99
-		for label, gmm in self.gmms.items():
-			ll = gmm.score_samples(features)[0]
+		for label, GaussianMixture in self.GaussianMixtures.items():
+			ll = GaussianMixture.score_samples(features)[0]
 			ll = np.sum(ll)
 			if ll > bestll:
 				bestll = ll
@@ -144,7 +144,7 @@ def trainAndTest(trainpath, trainwavs, testpath, testwavs):
 		if verbose: print(" inferred: %s" % result)
 		if result == label:
 			ncorrect += 1
-	return (ncorrect, len(testwavs), len(model.gmms))
+	return (ncorrect, len(testwavs), len(model.GaussianMixtures))
 
 #######################################################################
 # If this file is invoked as a script, it carries out a simple runthrough

@@ -99,7 +99,7 @@ class melScaling(object):
 		'''Compute DCT of input matrix.'''
 		return numpy.dot(self.DCTMatrix,data_matrix)
 		
-	def getMFCCs(self,warpedSpectrum,cn=True):
+	def getMFCCs(self,warpedSpectrum,cn=False):
 		'''Compute MFCC coefficients from Mel warped magnitude spectrum.'''
 		mfccs=self.dct(numpy.log(numpy.clip(warpedSpectrum, 1e-9, numpy.inf)))
 		if cn is False : mfccs[0] = 0.0
