@@ -1,0 +1,2 @@
+Other than the applause model, this directory's contents comes from pyAudioAnalysis:
+https://github.com/tyiannak/pyAudioAnalysis

@@ -1,13 +1,13 @@
 #!/bin/env python
 #
 # smacpy - simple-minded audio classifier in python
-# 
+#
 # Copyright (c) 2012 Dan Stowell and Queen Mary University of London
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import os.path
@@ -19,6 +19,11 @@ from scikits.audiolab import Format
 from sklearn.mixture import GaussianMixture
 
 from MFCC import melScaling
+
+import cPickle as pickle
+
+
+
 
 #######################################################################
 # some settings
@@ -135,8 +140,15 @@ class Smacpy:
 #######################################################################
 def trainAndTest(trainpath, trainwavs, testpath, testwavs):
 	"Handy function for evaluating your code: trains a model, tests it on wavs of known class. Returns (numcorrect, numtotal, numclasses)."
-	print("TRAINING")
-	model = Smacpy(trainpath, trainwavs)
+
+	picklepath = "zsmacpy_%s.pickle" % hash(trainpath + ':'.join(sorted(trainwavs.keys())) + ':'.join(sorted(trainwavs.values())))
+	if os.path.isfile(picklepath):
+		print "Reloading cached model from %s" % picklepath
+		model = pickle.load(open(picklepath, 'rb'))
+	else:
+		print("TRAINING")
+		model = Smacpy(trainpath, trainwavs)
+		pickle.dump(model, open(picklepath, 'wb'), -1)
 	print("TESTING")
 	ncorrect = 0
 	for wavpath,label in testwavs.items():
@@ -210,4 +222,3 @@ if __name__ == '__main__':
 			totcorrect += ncorrect
 			tottotal   += ntotal
 		print("Got %i correct out of %i (using stratified leave-one-out crossvalidation, %i folds)" % (totcorrect, tottotal, numfolds))
-
